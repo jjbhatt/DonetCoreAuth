@@ -11,6 +11,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using NETCore.MailKit.Extensions;
+using NETCore.MailKit.Infrastructure.Internal;
 
 namespace IdentityExample
 {
@@ -50,16 +52,22 @@ namespace IdentityExample
                 config.Password.RequireLowercase = false;
                 config.Password.RequireUppercase = false;
                 config.Password.RequireNonAlphanumeric = false;
+                config.SignIn.RequireConfirmedEmail = true;
 
             })
                 .AddEntityFrameworkStores<ApplicationDBContext>()
                 .AddDefaultTokenProviders();
 
-            services.ConfigureApplicationCookie(config => {
+            services.ConfigureApplicationCookie(config =>
+            {
 
                 config.Cookie.Name = "Identity.Cookie";
                 config.LoginPath = "/Home/Login";
             });
+
+            //var mailKitOptions = Configuration.GetSection("Email").Get<MailKitOptions>();
+
+            services.AddMailKit(config => config.UseMailKit(Configuration.GetSection("Email").Get<MailKitOptions>()));
 
             services.AddControllersWithViews();
         }

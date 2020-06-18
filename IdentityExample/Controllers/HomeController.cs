@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using NETCore.MailKit.Core;
 
 namespace IdentityExample.Controllers
 {
@@ -15,10 +16,12 @@ namespace IdentityExample.Controllers
     {
         private readonly UserManager<IdentityUser> userManager;
         private readonly SignInManager<IdentityUser> signInManager;
-        public HomeController(UserManager<IdentityUser> _userManager, SignInManager<IdentityUser> _signInManager)
+        private readonly IEmailService emailService;
+        public HomeController(UserManager<IdentityUser> _userManager, SignInManager<IdentityUser> _signInManager, IEmailService _emailService)
         {
             userManager = _userManager;
             signInManager = _signInManager;
+            emailService = _emailService;
         }
         public IActionResult Index()
         {
@@ -46,7 +49,7 @@ namespace IdentityExample.Controllers
                 var signInResult = await signInManager.PasswordSignInAsync(user, password, false, false);
                 if (signInResult.Succeeded)
                 {
-                    return RedirectToAction("Index");
+                    return RedirectToAction("Secret");
                 }
             }
 
@@ -72,17 +75,35 @@ namespace IdentityExample.Controllers
 
             if (result.Succeeded)
             {
-                //Sign-in user
-                var signInResult = await signInManager.PasswordSignInAsync(user, password, false, false);
-                if (signInResult.Succeeded)
-                {
-                    return RedirectToAction("Index");
-                }
+
+                var code = await userManager.GenerateEmailConfirmationTokenAsync(user);
+
+                var link = Url.Action(nameof(VerifyEmail), "Home", new { userId = user.Id, code }, Request.Scheme, Request.Host.ToString());
+
+                await emailService.SendAsync("Your Email id", "Email Verify", $"<a href=\"{link}\">Verify Email</a>", true);
+
+                return RedirectToAction("EmailVerification");
 
             }
 
             return RedirectToAction("Index");
         }
+        public async Task<IActionResult> VerifyEmail(string userid, string code)
+        {
+            var user = await userManager.FindByIdAsync(userid);
+            if (user == null)
+            {
+                return BadRequest();
+            }
+            var result = await userManager.ConfirmEmailAsync(user, code);
+            if (result.Succeeded)
+            {
+                return View();
+            }
+            return View();
+        }
+        public IActionResult EmailVerification() => View();
+
 
         public async Task<IActionResult> Logout()
         {
