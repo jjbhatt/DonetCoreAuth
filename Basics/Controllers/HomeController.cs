@@ -20,13 +20,25 @@ namespace Basics.Controllers
         {
             return View();
         }
-        [AllowAnonymous]
+        [Authorize(Policy = "Claim.DOB")]
+        public IActionResult SecretPolicy()
+        {
+            return View("Secret");
+        }
+        [Authorize(Roles = "Admin")]
+        public IActionResult SecretRole()
+        {
+            return View("Secret");
+        }
         public async Task<IActionResult> Authenticate()
         {
             var appClaims = new List<Claim>()
             {
                 new Claim(ClaimTypes.Name,"Jimit"),
                 new Claim(ClaimTypes.Email,"jimitbhatt92@gmail.com"),
+                new Claim(ClaimTypes.DateOfBirth,"11/11/1999"),
+                //new Claim(ClaimTypes.Role,"AdminTwo"),
+                new Claim(ClaimTypes.Role,"Admin"),
                 new Claim("App.Says","Nice work")
             };
 
