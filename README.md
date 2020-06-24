@@ -1,2 +1,2 @@
 # DotnetCoreAuth
-Different Authentication and Authorization techniques
+Authentication and Authorization
